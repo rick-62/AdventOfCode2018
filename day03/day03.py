@@ -35,8 +35,7 @@ class Puzzle:
         Returns the number of square inches which overlap.        
         """
         dct_coords = defaultdict(int)
-        for _id, values in self.data.items():
-            position, area = values
+        for position, area in self.data.values():
             X = range(position[0], position[0] + area[0])
             Y = range(position[1], position[1] + area[1])
             for coordinate in product(X, Y):
@@ -49,13 +48,25 @@ class Puzzle:
 
         return counter
 
-            
-
-
-
+   
     def solve_part2(self):
-        """Returns result for part 2"""
-        pass
+        """
+        Returns result for part 2:
+        Returns the ID of the claim which does not overlap
+        """
+        ids_not_overlapping = set(self.data.keys())
+        dct_coords = {}
+        for ID, values in self.data.items():
+            position, area = values
+            X = range(position[0], position[0] + area[0])
+            Y = range(position[1], position[1] + area[1])
+            for coordinate in product(X, Y):
+                if coordinate in dct_coords.keys():  # remove overlapping IDs
+                        ids_not_overlapping.discard(ID)
+                        ids_not_overlapping.discard(dct_coords[coordinate])
+                dct_coords[coordinate] = ID
+
+        return ids_not_overlapping
         
 
 if __name__ == "__main__":
