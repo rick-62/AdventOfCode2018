@@ -47,16 +47,14 @@ class Puzzle:
         """
         nap_times = self.get_nap_times()
 
-        mx = 0
-        for guard_id, minutes in nap_times.items():
-            total = sum(minutes.values())
-            if total > mx:
-                mx = total
-                sleepiest_guard = guard_id
-        
+        # returns guard id where sum of freq of minutes is largest
+        sleepiest_guard = max(nap_times, 
+                              key=lambda x: sum(nap_times[x].values()))
+
         most_common_minute = nap_times[sleepiest_guard].most_common(1)[0][0]
 
         return sleepiest_guard * most_common_minute
+            
             
     def solve_part2(self):
         """
@@ -66,14 +64,13 @@ class Puzzle:
         """
         nap_times = self.get_nap_times()
 
-        mx = 0
-        for guard, minutes in nap_times.items():
-            common_minute, freq = minutes.most_common(1)[0]
-            if freq > mx:
-                sleepiest_minute = (guard, common_minute)
-                mx = freq
-        
-        return sleepiest_minute[0] * sleepiest_minute[1]
+        # returns guard id who has most common minute napping
+        sleepiest_guard = max(nap_times, 
+                              key=lambda x: nap_times[x].most_common(1)[0][0])
+
+        most_common_minute = nap_times[sleepiest_guard].most_common(1)[0][0]
+
+        return sleepiest_guard * most_common_minute
 
         
 
