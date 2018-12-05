@@ -1,3 +1,4 @@
+from string import ascii_lowercase
 
 class Puzzle:
 
@@ -12,58 +13,42 @@ class Puzzle:
         return data
 
     
-    def destroy_opposite_polarity(self, polymer):
+    def reduce_polymer(self, polymer):
         """
-        Recursive function, to repeatedly remove units which
-        are adjacent, and of opposing Capitilisation e.g. "a" and "A".
-        Returns length of remaining units.
+        Remove units which are adjacent, and 
+        of opposing Capitilisation e.g. "a" and "A".
+        Returns remaining units.
         """
-        polymer_length = len(polymer)
-        new_polymer = []
-
-        i = 0
-        while i < (polymer_length - 1):
-            if abs(polymer[i] - polymer[i + 1]) == 32:  # difference in ascii codes between lower and upper cases
-                i += 2
+        new_polymer = ['']
+        for unit in polymer:
+            prev = new_polymer[-1]
+            if unit != prev and unit.lower() == prev.lower():
+                new_polymer.pop()
             else:
-                new_polymer.append(polymer[i])
-                i += 1
-        new_polymer.append(polymer[-1])
-            
-
-        if len(new_polymer) == polymer_length:
-            return polymer_length
-        else:
-            return self.destroy_opposite_polarity(new_polymer)
-
-            
+                new_polymer.append(unit)
+        return new_polymer[1:]
 
 
     def solve_part1(self):
         """
         Returns result for part 1:
-        Converts polymer string into ascii code, then
-        calls a function/method to remove unwanted units.
         Returns length of returned list of units.
         """
-        polymer = bytes(self.data, 'ascii')
-        return self.destroy_opposite_polarity(polymer)
+        return len(self.reduce_polymer(self.data))
         
         
     def solve_part2(self):
         """
         Returns result for part 2:
-        Converts polymer string into ascii code, then 
-        removes each unit type from the polymer and
-        calls a function/method to remove unwanted units.
+        Removes unwanted units after each unit type is removed, in turn.
         Returns minimum polymer length.
         """
-        polymer = bytes(self.data, 'ascii')
         sizes = []
-        for utypes in zip(range(65, 90), range(97, 122)):
-            test_polymer = [b for b in polymer if b not in utypes]
-            polymer_length = self.destroy_opposite_polarity(test_polymer)
-            sizes.append(polymer_length)
+        polymer = self.reduce_polymer(self.data)  # speed up
+        for l in ascii_lowercase:
+            test_polymer = [u for u in polymer if u.lower() != l]
+            length = len(self.reduce_polymer(test_polymer))
+            sizes.append(length)
         return min(sizes)
 
 
