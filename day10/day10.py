@@ -62,10 +62,10 @@ class Puzzle:
         """Returns result for part 1"""
         t = int(optimize.minimize_scalar(self.fun1)['x'])
 
-        mn = {}
-        for t in range(t-5, t+5):
-            mn[t] = self.fun2(t)
-        t = min(mn.keys(), key=lambda x: mn[x])
+        # mn = {}
+        # for t in range(t-5, t+5):
+        #     mn[t] = self.fun2(t)
+        # t = min(mn.keys(), key=lambda x: mn[x])
 
         C = self.solve(t)
         plt.scatter(*zip(*C), s=100)
