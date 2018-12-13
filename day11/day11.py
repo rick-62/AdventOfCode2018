@@ -22,7 +22,6 @@ class Puzzle:
             S[(x,y)] = arr[x:x+s, y:y+s].sum()
         return max(S.items(), key=lambda k: k[1])
 
-
     def solve_part1(self):
         """Returns result for part 1"""
         arr = self.cell_array()
@@ -32,7 +31,7 @@ class Puzzle:
         """Returns result for part 2"""
         arr = self.cell_array()
         S = {}
-        for s in range(3,20):
+        for s in range(2,20):
             c, m = self.solve(arr, s=s)
             S[(*c,s)] = m
         return max(S.keys(), key=lambda k: S[k])
