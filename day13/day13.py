@@ -2,7 +2,6 @@ import time
 import os
 import numpy as np
 from itertools import cycle
-from collections import deque
 
 
 def load_into_memory():
@@ -16,10 +15,10 @@ def printer(arr, pause=1):
     os.system('cls' if os.name == 'nt' else 'clear')
     for row in arr:
         print(''.join(row))
-    if pause:
+    if pause > 0:
         time.sleep(pause)
     else:
-        input()
+        input("Press Enter")
 
 def create_carts(arr):
     carts = []
@@ -37,38 +36,28 @@ def update(cart, arr):
     return arr
 
 def check_collided(carts):
-    for c in carts:
-        if c.collide:
-            return c.loc
-
+    return (c.loc for c in carts if c.collide)
+            
 def order_carts(carts):
-    carts = sorted(carts, key=lambda x: x.loc)
-    return carts
-    
+    return sorted(carts, key=lambda x: x.loc)
 
-def solve_part1():
-    """Returns result for part 1"""
-    arr = load_into_memory()
-    carts = create_carts(arr)
+def set_collided(loc, carts):
+    for c in carts:
+        if not c.collide:
+            if c.loc == loc:
+                c.collide = True
 
-    while True:
-        # if test: printer(arr, pause=0)
-        carts = order_carts(carts)
-        for c in carts:
-            update(c, arr)
+def remove_carts(carts, loc, arr):
+    remaining = []
+    for c in carts:
+        if c.loc == loc:
+            if c.track not in '><^v':
+                arr[loc] = c.track
+        else:
+            remaining.append(c)
 
-        loc = check_collided(carts)
-        if loc != None:
-            break
-
-    return loc
-
-
-def solve_part2():
-    """Returns result for part 2"""
-    pass
-
-        
+    return remaining, arr
+            
 class Cart:
     D = {'<': (0,-1), 
          '>': (0, 1),
@@ -131,6 +120,45 @@ class Cart:
     def __repr__(self):
         return str(self.loc)
  
+def solve_part1():
+    """Returns result for part 1"""
+    arr = load_into_memory()
+    carts = create_carts(arr)
+
+    while True:
+        # if test: printer(arr, pause=1)
+        carts = order_carts(carts)
+        for c in carts:
+            update(c, arr)
+
+        for loc in check_collided(carts):
+            return loc
+
+    
+def solve_part2():
+    """Returns result for part 2"""
+    arr = load_into_memory()
+    carts = create_carts(arr)
+
+    # loc = (128,79)
+    counter = 0
+    while True:
+        counter += 1
+        if test: printer(arr, pause=0)
+        carts = order_carts(carts)
+        for c in carts:
+            update(c, arr)
+            if c.collide:
+                set_collided(c.loc, carts)
+
+        # if counter > 200:
+            # printer(arr[loc[0]-4: loc[0]+4 ,loc[1]-4: loc[1]+4], pause=0)
+
+        for loc in check_collided(carts):
+            carts, arr = remove_carts(carts, loc, arr)
+            if len(carts) == 1:
+                return carts[0].loc
+
 
 if __name__ == "__main__":
     test = False
