@@ -22,59 +22,47 @@ def spaces(l, arr):
     return sorted([k for k,v in adjacent(l, arr).items() if v == '.'])
 
 def closest(l, targets):
-    return min(manhatten(l, t) for t in targets)
+    sort = sorted([t for t in targets])
+    return min(manhatten(l, t) for t in sort)
 
-def AStar(loc, arr, targets, q=PriorityQueue(), store=[], steps={}):
-    if loc in targets:
-        return 1
-    store.append(loc)
-    available = spaces(loc, arr)
-    if len(available) == 0:
-        return -1
-    for s in available:
-        if s in store:
-            continue
-        steps[s] = steps.get(loc, 1) + 1 
-        dist = closest(loc, targets)
-        score = steps.get(s, 1) + dist
-        q.put((score, s))
-        if s in targets:
-            return score
 
-    if q.empty(): 
-        return -1
-
+def AStar(start, arr, targets):
     
+    q = PriorityQueue()
+    q.put((0, start))
+    seen = {start: 0}
+    viz = arr.copy()
 
-    return AStar(q.get()[1], arr, targets, q, store, steps)
+    while not q.empty():
+        current = q.get()[1]
 
-
-def a_star_search(arr, start, targets):
-    frontier = PriorityQueue()
-    frontier.put(start, 0)
-    came_from = {}
-    cost_so_far = {}
-    came_from[start] = None
-    cost_so_far[start] = 0
-    
-    while not frontier.empty():
-        current = frontier.get()
-        
         if current in targets:
             break
-        
-        for nxt in spaces(current, arr):
-            new_cost = cost_so_far[current] + 1
-            if nxt not in cost_so_far or new_cost < cost_so_far[nxt]:
-                cost_so_far[nxt] = new_cost
-                dist = min([manhatten(goal, nxt) for goal in targets])
-                priority = new_cost + dist
-                frontier.put(nxt, priority)
-                came_from[nxt] = current
+
+        available = spaces(current, arr)
+
+        # viz[current] = '@'
+        # printer(viz)
+
+        for nxt in available:
+
+            
+            steps = seen[current] + 1
+            
+            if nxt not in seen.keys() or steps < seen.get(nxt, 0):
+
+                seen[nxt] = steps
+                score = steps + closest(current, targets)
+                q.put((score, nxt))
 
 
+    reach = seen.keys() & targets
+    if len(reach) == 0:
+        return -1
+    mn = min([seen[x] for x in reach])
+    best = sorted([k for k in reach if seen[k] == mn])
+    return seen[best[0]]
 
-    return cost_so_far[current] if current in targets else -1
 
 
 class character:
@@ -111,91 +99,116 @@ class character:
         return self.type
     
 
-## Import data ##
-filename = "test.txt"
-with open(filename) as f:
-    arr = np.array([list(row.strip('\n')) for row in f.readlines()])
-
-## Assign characters ##
-C = []
-for c in zip(*np.where((arr == 'G') | (arr == 'E'))):
-    C.append(character(arr[c], c, arr))
-
-## LOOP ##
-printer(arr, t=0.01)
 
 
-rounds = 0
-while True:
+def main(plus=0):
 
-    
+    ## Import data ##
+    filename = "input.txt"
+    with open(filename) as f:
+        arr = np.array([list(row.strip('\n')) for row in f.readlines()])
 
-    ## sort characters by location - top to bottom ##
+    ## Assign characters ##
+    C = []
+    for c in zip(*np.where((arr == 'G') | (arr == 'E'))):
+        C.append(character(arr[c], c, arr))
 
-    C = sorted([c for c in C if not c.dead], key=lambda c: c.loc)
-
+    # for part 2
     for c in C:
+        if c.type == 'E':
+            c.attk += plus
 
-        if c.dead:
-            continue
+    ## LOOP ##
+    # printer(arr, t=0.01)
 
-        # Check whether any more enemies available
-        enemies = [e for e in C if e.type == c.enemy and not e.dead]
-        if len(enemies) == 0:
-            sum_hp = sum([c.hp for c in C if not c.dead])
-            print("Complete - no more enemies")
-            print(f"Rounds:{rounds}\t Total_HP:{sum_hp}\t Output:{rounds*sum_hp}")
-            quit() 
 
-        if not c.in_battle:
+    rounds = 0
+    while True:
 
-            # creates list of target squares (around enemy)
-            targets = set(chain.from_iterable([e.spaces for e in enemies]))
+        
 
-            if len(targets) == 0:
-                continue  # skip to next character
+        ## sort characters by location - top to bottom ##
 
-            # best direction to go next
-            mn = np.inf
-            next_loc = None
-            for s in c.spaces.copy():
-                # steps = AStar(s, arr, targets, q=PriorityQueue(), store=[], steps={})
-                steps = a_star_search(arr, s, targets)
-                if steps == -1:
-                    continue
-                elif steps < mn: 
-                    mn = steps
-                    next_loc = s
+        C = sorted([c for c in C if not c.dead], key=lambda c: c.loc)
 
-            # refresh character and update arr
-            if next_loc != None:
-                arr[c.loc] = '.'
-                arr[next_loc] = c
-                c.loc = next_loc
-                printer(arr, t=0.01)
+        for c in C:
 
-        if c.in_battle:
+            if c.dead:
+                continue
 
-            defenders = sorted([e for e in enemies if e.loc in c.adj_enemies], key=lambda e: e.loc)
+            # Check whether any more enemies available
+            enemies = [e for e in C if e.type == c.enemy and not e.dead]
+            if len(enemies) == 0:
+                sum_hp = sum([c.hp for c in C if not c.dead])
+                print("Complete - no more enemies")
+                print(f"Rounds:{rounds}\t Total_HP:{sum_hp}\t Output:{rounds*sum_hp}")
+                return c.type
 
-            mn = np.inf
-            ne = None
-            for e in defenders:
-                if e.hp < mn:
-                    mn = e.hp 
-                    ne = e 
-            
-            ne.hp -= c.attk
+            if not c.in_battle:
 
-            if ne.dead:
-                arr[ne.loc] = '.'
-                printer(arr, t=0.01)
+                # creates list of target squares (around enemy)
+                targets = set(chain.from_iterable([e.spaces for e in enemies]))
 
-    # for c in C:
-    #     print(c.hp)
-    
+                if len(targets) == 0:
+                    continue  # skip to next character
 
-    rounds += 1
+                # best direction to go next
+                mn = np.inf
+                next_loc = None
+                for s in c.spaces.copy():
+                    steps = AStar(s, arr, targets)
+                    if steps == -1:
+                        continue
+                    elif steps < mn: 
+                        mn = steps
+                        next_loc = s
+
+                # refresh character and update arr
+                if next_loc != None:
+                    arr[c.loc] = '.'
+                    arr[next_loc] = c
+                    c.loc = next_loc
+                    # input()
+                    # printer(arr, t=0.01)
+                    
+
+            if c.in_battle:
+
+                defenders = sorted([e for e in enemies if e.loc in c.adj_enemies], key=lambda e: e.loc)
+
+                mn = np.inf
+                ne = None
+                for e in defenders:
+                    if e.hp < mn:
+                        mn = e.hp 
+                        ne = e 
+                
+                ne.hp -= c.attk
+
+                if ne.dead:
+                    arr[ne.loc] = '.'
+                    # printer(arr, t=0.01)
+                    if ne.type == 'E':
+                        return 'G'  # No elves can die
+
+        # for c in C:
+        #     print(c.hp)
+        
+        # printer(arr, t=0.05)
+        
+        rounds += 1
+
+print("part1:")
+part1 = main()
+
+print("part2:")
+winner = part1
+
+plus = 0
+while winner != 'E':
+    plus += 1
+    winner = main(plus=plus)
+
 
         
         
